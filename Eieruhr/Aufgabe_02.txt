@@ -1,0 +1,85 @@
+package Aufgabe_02;
+
+import java.util.Arrays;
+
+public class Dispatcher {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+		System.out.println(Arrays.toString(Dispatcher.execute((x) -> x*x, 5)));
+	}
+	
+	public static int[] execute(IDispatcher idispatcher, int max) {
+		Result resultObject = new Result(max - 1);
+		for(int i = 0; i < max - 1; i++) {
+			
+			DispatcherThread dispatcherThread = new DispatcherThread(idispatcher, i, resultObject);
+			dispatcherThread.start();	
+		}
+		
+		return resultObject.getResult();
+	}
+
+}
+
+
+package Aufgabe_02;
+
+public class DispatcherThread extends Thread{
+
+	private IDispatcher idispatcher;
+	private int position;
+	private Result result;
+	
+	public DispatcherThread(IDispatcher _idispatcher, int _position, Result _result) {
+		this.idispatcher = _idispatcher;
+		this.position = _position;
+		this.result = _result;
+	}
+	
+	public void run() {	
+		this.result.setResult(this.idispatcher.iFunction(this.position), this.position);
+	}
+	
+}
+
+
+package Aufgabe_02;
+
+public interface IDispatcher {
+    public int iFunction (int _value);
+}
+
+
+package Aufgabe_02;
+
+public class Result {
+
+	private int[] result;
+	private int max;
+	private int counter = 0;
+	
+	public Result(int _max) {
+		this.max = _max;
+		this.result = new int[_max];
+	}
+	
+	public synchronized int[] getResult() {
+		try {
+			wait();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		return this.result;
+	}
+	
+	public synchronized void setResult(int _value, int _position) {
+		this.result[_position] = _value;
+		this.counter++;
+		
+		if(this.counter == this.max) {
+			notifyAll();
+		}
+	}
+}
